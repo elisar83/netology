@@ -1,0 +1,61 @@
+#!/bin/bash
+INTERFACE="$1"
+PREFIX="$2"
+SUBNET="$3"
+HOST="$4"
+RANDOM_SUBNET="$5"
+RANDOM_HOST="$6"
+
+if [[ -z "$INTERFACE" ]]; then
+    echo "\$INTERFACE must be passed as first positional argument"
+    exit 1
+fi
+
+if [[ ! "$2" =~ [0-9]+\.[0-9]+ ]] ; then
+    echo "Error: Enter correct prefix" >&2
+    exit
+fi
+
+if [[ ! "$3" =~ [0-9]+ ]] ; then
+    echo "Error: Incorrect symbol" >&2
+    exit
+fi
+
+if [[ ! "$4" =~ [0-9]+ ]] ; then
+    echo "Error: Incorrect symbol" >&2
+    exit
+fi
+
+trap 'echo "Ping exit (Ctrl-C)"; exit 1' 2
+
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
+if [ -n "$4" ]
+   then
+                echo "[*] IP : ${PREFIX}.${SUBNET}.${HOST}"
+                arping -c 3 -i "$INTERFACE" "${PREFIX}.${SUBNET}.${HOST}" 2> /dev/null
+   exit
+fi
+
+if [ -n "$3" ]
+   then
+for RANDOM_HOST in {1..255}
+do
+                echo "[*] IP : ${PREFIX}.${SUBNET}.${RANDOM_HOST}"
+                arping -c 3 -i "$INTERFACE" "${PREFIX}.${SUBNET}.${RANDOM_HOST}" 2> /dev/null
+done
+
+else
+
+for RANDOM_SUBNET in {0..255}
+do
+        for RANDOM_HOST in {1..255}
+        do
+                echo "[*] IP : ${PREFIX}.${RANDOM_SUBNET}.${RANDOM_HOST}"
+                arping -c 3 -i "$INTERFACE" "${PREFIX}.${RANDOM_SUBNET}.${RANDOM_HOST}" 2> /dev/null
+        done
+done
+fi
